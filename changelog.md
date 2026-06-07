@@ -1,3 +1,11 @@
+# v2.5.0
+
+* Updated to Geometry Dash 2.2081 compatibility.
+* Updated to Geode SDK v5.x.
+* Fixed matjson API calls (asArray, asInt, asString -> as<T>).
+* Updated mod.json: replaced deprecated `importance: required` with `required: true` for dependencies.
+* Updated GitHub Actions workflows to use Geode SDK nightly for v5 builds.
+
 # v2.4.1
 
 * Added Auto Clicker keybind.
