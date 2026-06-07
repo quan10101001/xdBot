@@ -2,13 +2,22 @@
 
 #include "render_settings.hpp"
 
-#include <Geode/loader/Event.hpp>
+#include <Geode/Geode.hpp>
+#include <Geode/loader/Mod.hpp>
+using namespace geode::prelude;
 
 namespace ffmpeg::events {
 namespace impl {
+
+// Geode v5 compat: geode::Event::post() was removed; dispatch via EventCenter
+struct PostableEvent : public geode::Event {
+    void post() {
+        geode::EventCenter::get()->send(this, Mod::get());
+    }
+};
 #define DEFAULT_RESULT_ERROR geode::Err("Event was not handled")
 
-    class CreateRecorderEvent : public geode::Event {
+    class CreateRecorderEvent : public PostableEvent {
     public:
         CreateRecorderEvent() {m_ptr = nullptr;}
         void setPtr(void* ptr) {m_ptr = ptr;}
@@ -17,7 +26,7 @@ namespace impl {
         void* m_ptr;
     };
 
-    class DeleteRecorderEvent : public geode::Event {
+    class DeleteRecorderEvent : public PostableEvent {
     public:
         DeleteRecorderEvent(void* ptr) {m_ptr = ptr;}
         void* getPtr() const {return m_ptr;}
@@ -25,7 +34,7 @@ namespace impl {
         void* m_ptr;
     };
 
-    class InitRecorderEvent : public geode::Event {
+    class InitRecorderEvent : public PostableEvent {
     public:
         InitRecorderEvent(void* ptr, const RenderSettings* settings) {
             m_ptr = ptr;
@@ -45,7 +54,7 @@ namespace impl {
         geode::Result<> m_result = DEFAULT_RESULT_ERROR;
     };
 
-    class StopRecorderEvent : public geode::Event {
+    class StopRecorderEvent : public PostableEvent {
     public:
         StopRecorderEvent(void* ptr) {m_ptr = ptr;}
         void* getPtr() const {return m_ptr;}
@@ -55,7 +64,7 @@ namespace impl {
 
     struct Dummy {};
 
-    class GetWriteFrameFunctionEvent : public geode::Event {
+    class GetWriteFrameFunctionEvent : public PostableEvent {
     public:
         using writeFrame_t = geode::Result<>(Dummy::*)(std::vector<uint8_t> const&);
         GetWriteFrameFunctionEvent() = default;
@@ -66,7 +75,7 @@ namespace impl {
         writeFrame_t m_function;
     };
 
-    class CodecRecorderEvent : public geode::Event {
+    class CodecRecorderEvent : public PostableEvent {
     public:
         CodecRecorderEvent() = default;
 
@@ -76,7 +85,7 @@ namespace impl {
         std::vector<std::string> m_codecs;
     };
 
-    class MixVideoAudioEvent : public geode::Event {
+    class MixVideoAudioEvent : public PostableEvent {
     public:
         MixVideoAudioEvent(const std::filesystem::path& videoFile, const std::filesystem::path& audioFile, const std::filesystem::path& outputMp4File) {
             m_videoFile = &videoFile;
@@ -98,7 +107,7 @@ namespace impl {
         geode::Result<> m_result = DEFAULT_RESULT_ERROR;
     };
 
-    class MixVideoRawEvent : public geode::Event {
+    class MixVideoRawEvent : public PostableEvent {
     public:
         MixVideoRawEvent(const std::filesystem::path& videoFile, const std::vector<float>& raw, const std::filesystem::path& outputMp4File) {
             m_videoFile = &videoFile;
